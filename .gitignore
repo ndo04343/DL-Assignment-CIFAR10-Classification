@@ -1,0 +1,20 @@
+# Jupyter Notebook
+.ipynb_checkpoints/
+./*/.ipynb_checkpoints/
+./*/*/.ipynb_checkpoints/
+
+# saved instance
+saved/
+
+nogit/
+
+expr1/
+expr2/
+expr3/
+expr4/
+expr5/
+
+# cache
+__pycache__/
+./*/__pycache__/
+./*/*/__pycache__/

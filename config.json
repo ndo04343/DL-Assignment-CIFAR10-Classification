@@ -1,0 +1,53 @@
+{
+    "name": "CIFAR10 Classifier",
+    "save_dir": "saved/",
+    "n_gpu": 1,
+    "model": {
+        "type": "ResNet152Wrapper",
+        "args": {
+            "pretrained": true
+        }
+    },
+    "data_loader": {
+        "type": "CIFAR10DataLoader",
+        "args": {
+            "root": "/datasets/cifar-10/",
+            "train": true,
+            "batch_size": 64, 
+            "shuffle": true,
+            "num_workers": 12
+        }
+    },
+    "valid_loader": {
+        "type": "CIFAR10DataLoader",
+        "args": {
+            "root": "/datasets/cifar-10/",
+            "train": false,
+            "batch_size": 64, 
+            "shuffle": true,
+            "num_workers": 12
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0001,
+            "weight_decay": 0
+        }
+    },
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 20,
+            "gamma": 0.2
+        }
+    },
+    "loss": {
+        "type": "cross_entropy_loss",
+        "args": {}
+    },
+    "train": {
+        "epochs": 100,
+        "save_period": 1
+    }
+}

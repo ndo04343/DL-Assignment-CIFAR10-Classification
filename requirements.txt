@@ -1,0 +1,7 @@
+natsort==8.1.0
+torchmetrics==0.8.1
+pandas==1.4.2
+simclr==1.0.2
+matplotlib
+scipy
+jupyterlab
