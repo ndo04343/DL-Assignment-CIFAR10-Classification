@@ -1,10 +1,9 @@
 # Intermediate Report
 
-Kyounpook National University,
-Computer Science and Engineering,
-2017111066, Heesung Yang
+Kyounpook National University<br>
+Computer Science and Engineering<br>
+2017111066, Heesung Yang<br>
 
----
 
 ## 1. Claim
 For a model with sufficiently high generalization performance, good
