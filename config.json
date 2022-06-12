@@ -3,7 +3,7 @@
     "save_dir": "saved/",
     "n_gpu": 1,
     "model": {
-        "type": "ResNet152Wrapper",
+        "type": "EfficientNetWrapper",
         "args": {
             "pretrained": true
         }
@@ -11,7 +11,7 @@
     "data_loader": {
         "type": "CIFAR10DataLoader",
         "args": {
-            "root": "/datasets/cifar-10/",
+            "root": "/hdd/datasets/cifar-10/",
             "train": true,
             "batch_size": 64, 
             "shuffle": true,
@@ -21,7 +21,7 @@
     "valid_loader": {
         "type": "CIFAR10DataLoader",
         "args": {
-            "root": "/datasets/cifar-10/",
+            "root": "/hdd/datasets/cifar-10/",
             "train": false,
             "batch_size": 64, 
             "shuffle": true,
@@ -31,7 +31,7 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.0001,
+            "lr": 0.00001,
             "weight_decay": 0
         }
     },

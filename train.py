@@ -6,16 +6,8 @@ import torch
 
 from utils import get_train_config, get_logger
 
-def train(
-        logger,
-        epoch, 
-        model, 
-        device, 
-        train_loader, 
-        optimizer,
-        lr_scheduler,
-        criterion
-    ):
+
+def train(logger, epoch, model, device, train_loader, optimizer, lr_scheduler, criterion):
     """Training phase"""
     model.train()
     train_loss = 0 
@@ -32,24 +24,18 @@ def train(
 
         train_loss += loss.item()
         _, predicted = torch.max(output.data, 1)
-
         total += target.size(0)
         correct += predicted.eq(target.data).cpu().sum()
         if batch_idx % 10 == 0:
-            logger.info('Epoch: {} | Batch_idx: {} |  Loss: ({:.4f}) | Acc: ({:.2f}%) ({}/{})'
-                  .format(epoch, batch_idx, train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-    lr_scheduler.step()
+            logger.info('Epoch: {} | Batch_idx: {} |  Loss: ({:.4f}) | Acc: ({:.2f}%) ({}/{}) | Learning rate: ({})'
+                  .format(epoch, batch_idx, train_loss / (batch_idx + 1), 100. * correct / total, correct, total, optimizer.param_groups[0]['lr']))
+    #lr_scheduler.step()
 
     return train_loss / (batch_idx + 1), 100. * correct / total
 
 
-def test(
-        logger,
-        model, 
-        device, 
-        test_loader, 
-        criterion
-    ):
+def test(logger, model, device, test_loader, criterion):
+    """Training phase"""
     model.eval()
     test_loss = 0
     correct = 0
@@ -75,8 +61,10 @@ def main(args):
     logger = get_logger(config) # Get logger 
 
     # Get componetns
-    model, device, device_ids = config['model'], config['device'], config['device_ids']
-    optimizer, lr_scheduler = config['optimizer'], config['lr_scheduler']
+    model = config['model']
+    device, device_ids = config['device'], config['device_ids']
+    optimizer = config['optimizer']
+    lr_scheduler = config['lr_scheduler']
     train_loader = config['data_loader']
     test_loader = config['valid_loader']
     criterion = config['loss']
@@ -91,50 +79,73 @@ def main(args):
     # Train with tensorboard
     start_time = time() # Time
 
-    ################### MODEL LOADING #########################
-    #config['model'].load_state_dict(torch.load("saved/CIFAR10 Classifier/ResNet152Wrapper/train/save_instances/model_weights_best_model_epoch.pth"))
-    ###########################################################
-
-    ################### MODEL CUSTOMIZATION ###################
-    for param in config['model'].parameters():
-        param.requires_grad = False
-
-    for param in config['model'].resnet152.fc.parameters():
+    ###################################################################################################################
+    ############################################### MODEL LOADING #####################################################
+    model.load_state_dict(torch.load("best_model.pth"))
+    for param in model.parameters():
         param.requires_grad = True
+
+    #for param in model.efficientnet.classifier.parameters():
+    #    param.requires_grad = True
     
-    for param in config['model'].resnet152.layer4.parameters():
-        param.requires_grad = True
+    #for param in model.efficientnet.features[4:].parameters():
+    #    param.requires_grad = True
 
-    for param in config['model'].resnet152.layer3.parameters():
-        param.requires_grad = True
-    
-    for param in config['model'].resnet152.layer2.parameters():
-        param.requires_grad = True
-    ###########################################################
+    from torch.nn.modules.batchnorm import BatchNorm2d
+    def bn_freeze(model):
+        if type(model) is BatchNorm2d:
+            for param in model.parameters():
+                param.requires_grad = False
+        for child in model.children():
+            bn_freeze(child)
+    bn_freeze(model)
 
+    ###################################################################################################################
+    ###################################################################################################################
+
+
+    stop_flag = False
+    best_valid_loss = float("inf")
     for epoch in range(config['train']['epochs']):
         epoch_start_time = time()
-        train_loss, train_acc = train(
-            logger,
-            epoch, 
-            model, 
-            device, 
-            train_loader, 
-            optimizer,
-            lr_scheduler,
-            criterion
-        )
-        valid_loss, valid_acc = test(
-            logger,
-            model, 
-            device, 
-            test_loader, 
-            criterion
-        )
+        try:
+            train_loss, train_acc = train(logger, epoch,  model,  device,  train_loader,  optimizer, lr_scheduler, criterion)
+        except KeyboardInterrupt:
+            print("Menu")
+            print("1. Change learning rate")
+            print("2. Stop")
+
+            while True:
+                ch = int(input())
+                if ch == 1:
+                    optimizer.param_groups[0]['lr'] = float(input("Learning rate : "))
+                    break
+                elif ch == 2:
+                    stop_flag = True
+                    break
+        
+        if stop_flag:
+            valid_loss, valid_acc = test(logger, model, device, test_loader, criterion)
+            # Model save
+            if best_valid_loss > valid_loss:
+                best_valid_loss = valid_loss
+                torch.save(config['model'].state_dict(), config['model_save_dir'] / f'acc_{valid_acc}_best_model.pth')
+
+            if (epoch + 1) % config['train']['save_period'] == 0:
+                torch.save(config['model'].state_dict(), config['model_save_dir'] / f'model_weights_{epoch + 1}epoch.pth')
+            break
+
+        valid_loss, valid_acc = test(logger, model, device, test_loader, criterion)
         logger.info("Epoch time : " + str(timedelta(seconds=time() - epoch_start_time)).split(".")[0])
+
         # Model save
+        if best_valid_loss > valid_loss:
+            best_valid_loss = valid_loss
+            torch.save(config['model'].state_dict(), config['model_save_dir'] / f'acc_{int(valid_acc*1000)}_best_model.pth')
+
         if (epoch + 1) % config['train']['save_period'] == 0:
             torch.save(config['model'].state_dict(), config['model_save_dir'] / f'model_weights_{epoch + 1}epoch.pth')
+
 
     # Time
     end_time = time()
