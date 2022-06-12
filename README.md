@@ -1,10 +1,9 @@
 # Deep Learning Assignment CIFAR-10 Classification
 
-Kyounpook National University,
-Computer Science and Engineering,
-2017111066, Heesung Yang
+Kyounpook National University<br>
+Computer Science and Engineering<br>
+2017111066, Heesung Yang<br>
 
----
 
 ## 1. Detail
 - Model : EfficientNet-b3 pretrained model
